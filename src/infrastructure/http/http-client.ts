@@ -23,8 +23,8 @@ class HttpClient {
     error: Array<(error: any) => any>;
   };
 
-  constructor(baseURL: string = env.API_URL) {
-    this.baseURL = baseURL;
+  constructor(baseURL?: string) {
+    this.baseURL = baseURL || env.API_URL;
     this.defaultHeaders = {
       "Content-Type": "application/json",
     };
@@ -33,6 +33,8 @@ class HttpClient {
       response: [],
       error: [],
     };
+    
+    console.log("HttpClient initialized with baseURL:", this.baseURL);
   }
 
   /**
@@ -71,6 +73,12 @@ class HttpClient {
       ...this.defaultHeaders,
       Authorization: `Bearer ${token}`,
     };
+    // Also store in localStorage as backup
+    if (typeof window !== 'undefined') {
+      localStorage.setItem('token', token);
+      localStorage.setItem('auth_token', token);
+    }
+    console.log("Token set in HttpClient and localStorage");
     return this;
   }
 
@@ -81,6 +89,7 @@ class HttpClient {
     const headers = { ...this.defaultHeaders };
     delete (headers as any).Authorization;
     this.defaultHeaders = headers;
+    console.log("Token removed from HttpClient");
     return this;
   }
 
@@ -109,6 +118,9 @@ class HttpClient {
     endpoint: string,
     config: RequestConfig = {}
   ): Promise<ApiResponse<T>> {
+    // Always check for token before making request
+    const token = typeof window !== 'undefined' ? localStorage.getItem('token') || localStorage.getItem('auth_token') : null;
+    
     let finalConfig: RequestConfig = {
       ...config,
       method,
@@ -117,6 +129,14 @@ class HttpClient {
         ...config.headers,
       },
     };
+    
+    // Add token if available
+    if (token && finalConfig.headers) {
+      (finalConfig.headers as any)['Authorization'] = `Bearer ${token}`;
+      console.log("[HttpClient] Token added to request");
+    } else if (!token) {
+      console.log("[HttpClient] No token found in localStorage");
+    }
 
     // Apply request interceptors
     for (const interceptor of this.interceptors.request) {
@@ -124,6 +144,11 @@ class HttpClient {
     }
 
     const url = this.buildURL(endpoint, finalConfig.params);
+    
+    // Log request details for debugging
+    console.log(`[${method}] ${url}`);
+    console.log("Headers:", finalConfig.headers);
+    console.log("Has Authorization header:", !!(finalConfig.headers as any)?.Authorization);
     
     // Setup timeout
     const controller = new AbortController();
@@ -139,6 +164,9 @@ class HttpClient {
       });
 
       clearTimeout(timeoutId);
+
+      // Log response status
+      console.log(`Response Status: ${response.status}`);
 
       // Parse response
       let data: T;
@@ -159,6 +187,11 @@ class HttpClient {
 
       // Check if response is OK
       if (!response.ok) {
+        console.error("Request failed:", {
+          status: response.status,
+          statusText: response.statusText,
+          data
+        });
         throw {
           response: apiResponse,
           message: `Request failed with status ${response.status}`,
@@ -174,6 +207,8 @@ class HttpClient {
       return finalResponse;
     } catch (error: any) {
       clearTimeout(timeoutId);
+      
+      console.error("Request error:", error);
       
       // Apply error interceptors
       let finalError = error;

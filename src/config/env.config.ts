@@ -18,14 +18,16 @@ export const env = {
   NODE_ENV: process.env.NODE_ENV || "development",
   APP_URL: getEnvVariable("NEXT_PUBLIC_APP_URL", "http://localhost:3000"),
   
-  // API
-  API_URL: getEnvVariable("NEXT_PUBLIC_API_URL", "http://localhost:4000"),
+  // API - Using Riwi Talent Backend
+  // Using local backend
+  API_URL: getEnvVariable("NEXT_PUBLIC_API_URL", "http://localhost:5162/api"),
+  BACKEND_API_URL: getEnvVariable("NEXT_PUBLIC_BACKEND_API_URL", "http://localhost:5162/api"),
   API_TIMEOUT: parseInt(getEnvVariable("NEXT_PUBLIC_API_TIMEOUT", "30000")),
   
   // Authentication
-  AUTH_SECRET: getEnvVariable("AUTH_SECRET", "development-secret"),
-  JWT_SECRET: getEnvVariable("JWT_SECRET", "jwt-secret"),
-  JWT_EXPIRES_IN: getEnvVariable("JWT_EXPIRES_IN", "7d"),
+  AUTH_SECRET: process.env.AUTH_SECRET || "development-secret",
+  JWT_SECRET: process.env.JWT_SECRET || "jwt-secret",
+  JWT_EXPIRES_IN: process.env.JWT_EXPIRES_IN || "7d",
   
   // Database (if needed)
   DATABASE_URL: process.env.DATABASE_URL || "",

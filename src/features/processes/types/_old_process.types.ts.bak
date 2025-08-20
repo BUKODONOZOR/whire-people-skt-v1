@@ -1,0 +1,240 @@
+/**
+ * Process Types and Entities
+ * Represents recruitment/hiring processes
+ */
+
+// Process Status Enum
+export enum ProcessStatus {
+  DRAFT = 0,
+  ACTIVE = 1,
+  IN_PROGRESS = 2,
+  COMPLETED = 3,
+  CANCELLED = 4,
+  ON_HOLD = 5,
+}
+
+export const ProcessStatusLabels: Record<ProcessStatus, string> = {
+  [ProcessStatus.DRAFT]: "Draft",
+  [ProcessStatus.ACTIVE]: "Active",
+  [ProcessStatus.IN_PROGRESS]: "In Progress",
+  [ProcessStatus.COMPLETED]: "Completed",
+  [ProcessStatus.CANCELLED]: "Cancelled",
+  [ProcessStatus.ON_HOLD]: "On Hold",
+};
+
+export const ProcessStatusColors: Record<ProcessStatus, string> = {
+  [ProcessStatus.DRAFT]: "muted",
+  [ProcessStatus.ACTIVE]: "success",
+  [ProcessStatus.IN_PROGRESS]: "warning",
+  [ProcessStatus.COMPLETED]: "info",
+  [ProcessStatus.CANCELLED]: "destructive",
+  [ProcessStatus.ON_HOLD]: "secondary",
+};
+
+// Process Priority
+export enum ProcessPriority {
+  LOW = 1,
+  MEDIUM = 2,
+  HIGH = 3,
+  URGENT = 4,
+}
+
+// Main Process Entity
+export interface Process {
+  toJSON: any;
+  id: string;
+  title: string;
+  description?: string;
+  companyName: string; // Since company is not an entity, just store name
+  
+  // Process Details
+  status: ProcessStatus;
+  priority: ProcessPriority;
+  type?: string; // e.g., "Full-time", "Contract", "Part-time"
+  department?: string;
+  location?: string;
+  remote?: boolean;
+  
+  // Requirements
+  requiredSkills?: Array<{
+    name: string;
+    level: number;
+    required: boolean;
+  }>;
+  requiredLanguages?: Array<{
+    name: string;
+    level: string;
+  }>;
+  minExperience?: number;
+  maxExperience?: number;
+  educationLevel?: string;
+  
+  // Compensation
+  salaryMin?: number;
+  salaryMax?: number;
+  currency?: string;
+  benefits?: string[];
+  
+  // Dates
+  startDate?: string;
+  endDate?: string;
+  deadline?: string;
+  createdAt: string;
+  updatedAt: string;
+  
+  // Metrics
+  totalCandidates?: number;
+  activeCandidates?: number;
+  rejectedCandidates?: number;
+  hiredCandidates?: number;
+  
+  // Related Data
+  assignedTo?: string; // User ID
+  createdBy?: string; // User ID
+  tags?: string[];
+  
+  // Process Stages
+  stages?: ProcessStage[];
+  currentStage?: string;
+}
+
+// Process Stage
+export interface ProcessStage {
+  id: string;
+  name: string;
+  order: number;
+  description?: string;
+  durationDays?: number;
+  isActive: boolean;
+  completedAt?: string;
+}
+
+// Process Candidate (Student in Process)
+export interface ProcessCandidate {
+  id: string;
+  processId: string;
+  candidateId: string; // Student/Talent ID
+  candidateName: string;
+  candidateEmail: string;
+  
+  // Status in this process
+  status: ProcessCandidateStatus;
+  stage?: string;
+  score?: number;
+  ranking?: number;
+  
+  // Dates
+  appliedAt: string;
+  lastActivityAt?: string;
+  hiredAt?: string;
+  rejectedAt?: string;
+  
+  // Notes and feedback
+  notes?: string;
+  feedback?: ProcessFeedback[];
+}
+
+// Candidate Status in Process
+export enum ProcessCandidateStatus {
+  APPLIED = 1,
+  SCREENING = 2,
+  INTERVIEWING = 3,
+  TESTING = 4,
+  OFFER_SENT = 5,
+  HIRED = 6,
+  REJECTED = 7,
+  WITHDRAWN = 8,
+}
+
+// Feedback
+export interface ProcessFeedback {
+  id: string;
+  author: string;
+  date: string;
+  rating?: number;
+  comment: string;
+  stage?: string;
+}
+
+// API Response Types
+export interface ProcessPaginatedResponse {
+  data: Process[];
+  total: number;
+  page: number;
+  pageSize: number;
+  totalPages: number;
+  hasNextPage: boolean;
+  hasPreviousPage: boolean;
+}
+
+// Filter Types
+export interface ProcessFilters {
+  search?: string;
+  status?: ProcessStatus[];
+  priority?: ProcessPriority[];
+  companyName?: string;
+  location?: string;
+  remote?: boolean;
+  minSalary?: number;
+  maxSalary?: number;
+  tags?: string[];
+  assignedTo?: string;
+  createdBy?: string;
+  
+  // Date filters
+  createdAfter?: string;
+  createdBefore?: string;
+  deadlineAfter?: string;
+  deadlineBefore?: string;
+  
+  // Pagination
+  page?: number;
+  pageSize?: number;
+  sortBy?: string;
+  sortOrder?: 'asc' | 'desc';
+}
+
+// DTO Types
+export interface CreateProcessDTO {
+  title: string;
+  description?: string;
+  companyName: string;
+  status?: ProcessStatus;
+  priority?: ProcessPriority;
+  type?: string;
+  department?: string;
+  location?: string;
+  remote?: boolean;
+  requiredSkills?: Array<{
+    name: string;
+    level: number;
+    required: boolean;
+  }>;
+  requiredLanguages?: Array<{
+    name: string;
+    level: string;
+  }>;
+  minExperience?: number;
+  maxExperience?: number;
+  salaryMin?: number;
+  salaryMax?: number;
+  currency?: string;
+  deadline?: string;
+  tags?: string[];
+}
+
+export interface UpdateProcessDTO extends Partial<CreateProcessDTO> {
+  status?: ProcessStatus;
+}
+
+export interface AddCandidateToProcessDTO {
+  processId: string;
+  candidateIds: string[];
+}
+
+export interface UpdateCandidateStatusDTO {
+  processId: string;
+  candidateId: string;
+  status: ProcessCandidateStatus;
+  notes?: string;
+}

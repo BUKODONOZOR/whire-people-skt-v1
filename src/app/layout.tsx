@@ -4,6 +4,8 @@ import "./globals.css";
 import { cn } from "@/lib/utils";
 import { ThemeProvider } from "@/providers/theme-provider";
 import { QueryProvider } from "@/providers/query-provider";
+import { AuthInitializer } from "@/providers/auth-initializer";
+import { HttpInterceptorProvider } from "@/providers/http-interceptor-provider";
 
 const inter = Inter({ 
   subsets: ["latin"],
@@ -42,9 +44,13 @@ export const metadata: Metadata = {
     },
   },
   icons: {
-    icon: "/favicon.ico",
-    shortcut: "/favicon-16x16.png",
-    apple: "/apple-touch-icon.png",
+    icon: [
+      { url: "/favicon.svg", type: "image/svg+xml" },
+      { url: "/logos/wired-people-icon-teal.png", sizes: "32x32", type: "image/png" },
+      { url: "/logos/wired-people-icon-teal.png", sizes: "16x16", type: "image/png" },
+    ],
+    shortcut: "/logos/wired-people-icon-teal.png",
+    apple: "/logos/wired-people-icon-teal.png",
   },
 };
 
@@ -67,9 +73,13 @@ export default function RootLayout({
           enableSystem
           disableTransitionOnChange
         >
-          <QueryProvider>
-            {children}
-          </QueryProvider>
+          <HttpInterceptorProvider>
+            <QueryProvider>
+              <AuthInitializer>
+                {children}
+              </AuthInitializer>
+            </QueryProvider>
+          </HttpInterceptorProvider>
         </ThemeProvider>
       </body>
     </html>
