@@ -1,11 +1,13 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import Link from "next/link";
 import { authService } from "@/features/auth/services/auth.service";
+import { UnknownObject } from "@/types/common";
 
 export default function DebugTokenPage() {
   const [token, setToken] = useState<string | null>(null);
-  const [testResult, setTestResult] = useState<any>(null);
+  const [testResult, setTestResult] = useState<UnknownObject | null>(null);
   const [loading, setLoading] = useState(false);
 
   useEffect(() => {
@@ -49,10 +51,11 @@ export default function DebugTokenPage() {
         data: data,
         success: response.ok,
       });
-    } catch (error: any) {
+    } catch (error: unknown) {
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error';
       console.error("Test failed:", error);
       setTestResult({
-        error: error.message,
+        error: errorMessage,
         details: error,
       });
     } finally {
@@ -91,9 +94,9 @@ export default function DebugTokenPage() {
               ) : (
                 <div>
                   <p className="text-red-600">✗ No token found</p>
-                  <a href="/token" className="text-blue-600 hover:underline">
+                  <Link href="/token" className="text-blue-600 hover:underline">
                     Go to Token Page to set one
-                  </a>
+                  </Link>
                 </div>
               )}
             </div>
@@ -152,7 +155,7 @@ export default function DebugTokenPage() {
               <ol className="list-decimal list-inside space-y-1 text-sm">
                 <li>Make sure the backend is running on http://localhost:5162</li>
                 <li>Check that you have a valid token (green status above)</li>
-                <li>Click "Test API with Direct Fetch" to test the connection</li>
+                <li>Click &quot;Test API with Direct Fetch&quot; to test the connection</li>
                 <li>Check the browser console (F12) for detailed logs</li>
                 <li>If you get a 401, the token might be expired or invalid</li>
               </ol>
@@ -162,15 +165,15 @@ export default function DebugTokenPage() {
             <div className="p-4 bg-yellow-50 rounded">
               <h3 className="font-semibold mb-2">Quick Actions:</h3>
               <div className="space-x-4">
-                <a href="/token" className="text-blue-600 hover:underline">
+                <Link href="/token" className="text-blue-600 hover:underline">
                   Go to Token Page
-                </a>
-                <a href="/processes" className="text-blue-600 hover:underline">
+                </Link>
+                <Link href="/processes" className="text-blue-600 hover:underline">
                   Go to Processes
-                </a>
-                <a href="/talent" className="text-blue-600 hover:underline">
+                </Link>
+                <Link href="/talent" className="text-blue-600 hover:underline">
                   Go to Talent
-                </a>
+                </Link>
               </div>
             </div>
           </div>

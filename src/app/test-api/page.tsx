@@ -1,10 +1,26 @@
 "use client";
 
 import { useState } from "react";
+import Link from "next/link";
 import { authService } from "@/features/auth/services/auth.service";
+import { UnknownObject } from "@/types/common";
+
+interface ProcessItem {
+  id: string;
+  name: string;
+  companyId: string;
+  companyName: string;
+  statusName: string;
+}
+
+interface ApiResponse {
+  totalCount?: number;
+  pageNumber?: number;
+  items?: ProcessItem[];
+}
 
 export default function TestApiPage() {
-  const [response, setResponse] = useState<any>(null);
+  const [response, setResponse] = useState<ApiResponse | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -42,13 +58,14 @@ export default function TestApiPage() {
       // Check for company ID
       if (data.items && Array.isArray(data.items)) {
         const companyId = "166c4bfc-1c2b-4ddd-866c-fbdfed07d6a3";
-        const ourProcesses = data.items.filter((item: any) => item.companyId === companyId);
+        const ourProcesses = data.items.filter((item: ProcessItem) => item.companyId === companyId);
         console.log(`Found ${ourProcesses.length} processes for company ${companyId}`);
         console.log("Our processes:", ourProcesses);
       }
-    } catch (err: any) {
+    } catch (err: unknown) {
+      const errorMessage = err instanceof Error ? err.message : 'Unknown error';
       console.error("Error:", err);
-      setError(err.message || "Unknown error");
+      setError(errorMessage);
     } finally {
       setLoading(false);
     }
@@ -84,9 +101,10 @@ export default function TestApiPage() {
       console.log("Response data:", data);
       
       setResponse(data);
-    } catch (err: any) {
+    } catch (err: unknown) {
+      const errorMessage = err instanceof Error ? err.message : 'Unknown error';
       console.error("Error:", err);
-      setError(err.message || "Unknown error");
+      setError(errorMessage);
     } finally {
       setLoading(false);
     }
@@ -148,8 +166,8 @@ export default function TestApiPage() {
                 <div className="p-4 bg-green-50 rounded">
                   <h2 className="font-semibold mb-2">Processes for Company 166c4bfc-1c2b-4ddd-866c-fbdfed07d6a3:</h2>
                   {response.items
-                    .filter((item: any) => item.companyId === "166c4bfc-1c2b-4ddd-866c-fbdfed07d6a3")
-                    .map((item: any) => (
+                    .filter((item: ProcessItem) => item.companyId === "166c4bfc-1c2b-4ddd-866c-fbdfed07d6a3")
+                    .map((item: ProcessItem) => (
                       <div key={item.id} className="p-2 mb-2 bg-white rounded">
                         <p className="font-medium">{item.name}</p>
                         <p className="text-sm text-gray-600">Company: {item.companyName}</p>
@@ -166,9 +184,9 @@ export default function TestApiPage() {
         <div className="mt-8 p-4 bg-yellow-50 rounded">
           <h3 className="font-semibold mb-2">Instructions:</h3>
           <ol className="list-decimal list-inside space-y-1 text-sm">
-            <li>First, go to <a href="/token" className="text-blue-500 underline">/token</a> and set a valid JWT token</li>
-            <li>Come back here and click "Test Direct API Call" to see all processes</li>
-            <li>Click "Test with Company Filter" to test filtering by company ID</li>
+            <li>First, go to <Link href="/token" className="text-blue-500 underline">/token</Link> and set a valid JWT token</li>
+            <li>Come back here and click &quot;Test Direct API Call&quot; to see all processes</li>
+            <li>Click &quot;Test with Company Filter&quot; to test filtering by company ID</li>
             <li>Check the browser console for detailed logs</li>
           </ol>
         </div>

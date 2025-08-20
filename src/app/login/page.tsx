@@ -7,13 +7,14 @@ import { Button } from "@/shared/components/ui/button";
 import { Input } from "@/shared/components/ui/input";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/shared/components/ui/card";
 import { Loader2, LogIn } from "lucide-react";
+import { LoginFormData } from "@/types/common";
 
 export default function LoginPage() {
   const router = useRouter();
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState("");
   
-  const [formData, setFormData] = useState({
+  const [formData, setFormData] = useState<LoginFormData>({
     email: "",
     password: "",
   });
@@ -26,9 +27,10 @@ export default function LoginPage() {
     try {
       await authService.login(formData);
       router.push("/talent");
-    } catch (err: any) {
+    } catch (err: unknown) {
+      const errorMessage = err instanceof Error ? err.message : 'Invalid email or password';
       console.error("Login error:", err);
-      setError(err.message || "Invalid email or password");
+      setError(errorMessage);
     } finally {
       setIsLoading(false);
     }

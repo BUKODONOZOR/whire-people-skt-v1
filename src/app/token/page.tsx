@@ -194,8 +194,8 @@ export default function TokenDebugPage() {
             <CardTitle>How to use:</CardTitle>
           </CardHeader>
           <CardContent className="space-y-2 text-sm text-muted-foreground">
-            <p>1. Click "Use Default Admin Token" to quickly set the admin token</p>
-            <p>2. Or paste your own JWT token and click "Set Token"</p>
+            <p>1. Click &quot;Use Default Admin Token&quot; to quickly set the admin token</p>
+            <p>2. Or paste your own JWT token and click &quot;Set Token&quot;</p>
             <p>3. Once the token is set, you'll be redirected to /talent</p>
             <p>4. The token will be automatically included in all API requests</p>
             <div className="mt-4 p-3 bg-warning/10 rounded-lg">

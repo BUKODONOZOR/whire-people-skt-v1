@@ -19,3 +19,20 @@ function generateHash(str: string): number {
 }
 
 /**
+ * Generate talent data
+ */
+export function generateTalentData(id: string): Talent {
+  const hash = generateHash(id);
+  
+  return {
+    id,
+    name: `Talent ${id}`,
+    email: `talent${id}@example.com`,
+    skills: [],
+    cohort: `Cohort ${hash % 10}`,
+  } as Talent;
+}
+
+export default {
+  generateTalentData
+};
