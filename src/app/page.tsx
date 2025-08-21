@@ -50,7 +50,7 @@ export default function HomePage() {
     );
   }
 
-  // Mock data for dashboard
+  // Mock data for dashboard with better icon contrast
   const stats = [
     {
       title: "Total Talent",
@@ -58,8 +58,8 @@ export default function HomePage() {
       change: "+12%",
       trend: "up",
       icon: Users,
-      color: "text-[#0D6661]",
-      bgColor: "bg-[#0D6661]/10"
+      color: "text-emerald-100", // Verde muy claro para contraste
+      bgColor: "bg-[#0D6661]/25" // Fondo más visible
     },
     {
       title: "Active Processes",
@@ -67,8 +67,8 @@ export default function HomePage() {
       change: "+5.2%",
       trend: "up",
       icon: Target,
-      color: "text-[#FC7E00]",
-      bgColor: "bg-[#FC7E00]/10"
+      color: "text-orange-100", // Naranja muy claro para contraste
+      bgColor: "bg-[#FC7E00]/25" // Fondo más visible
     },
     {
       title: "Placement Rate",
@@ -76,8 +76,8 @@ export default function HomePage() {
       change: "+3.1%",
       trend: "up",
       icon: TrendingUp,
-      color: "text-[#75A3AB]",
-      bgColor: "bg-[#75A3AB]/10"
+      color: "text-cyan-100", // Cian muy claro para contraste
+      bgColor: "bg-[#75A3AB]/25" // Fondo más visible
     },
     {
       title: "Avg Time to Hire",
@@ -85,8 +85,8 @@ export default function HomePage() {
       change: "-4 days",
       trend: "down",
       icon: Clock,
-      color: "text-[#164643]",
-      bgColor: "bg-[#164643]/10"
+      color: "text-teal-100", // Teal muy claro para contraste
+      bgColor: "bg-[#164643]/25" // Fondo más visible
     }
   ];
 
@@ -156,7 +156,7 @@ export default function HomePage() {
                     <div key={index} className="bg-white/10 backdrop-blur-sm rounded-xl p-6 border border-white/20">
                       <div className="flex items-center justify-between mb-4">
                         <div className={cn("p-3 rounded-lg", stat.bgColor)}>
-                          <Icon className={cn("w-6 h-", stat.color)} />
+                          <Icon className={cn("w-6 h-6", stat.color)} />
                         </div>
                         <span className={cn(
                           "text-sm font-medium px-2 py-1 rounded-full",
