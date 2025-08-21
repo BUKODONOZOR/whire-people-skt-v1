@@ -13,14 +13,35 @@ const getEnvVariable = (key: string, defaultValue?: string): string => {
   return value;
 };
 
+// Detectar entorno automáticamente
+const isProduction = typeof window !== 'undefined' && 
+  (window.location.hostname.includes('vercel.app') || 
+   window.location.hostname.includes('netlify.app') ||
+   !window.location.hostname.includes('localhost'));
+
+const isDevelopment = !isProduction;
+
 export const env = {
   // App
   NODE_ENV: process.env.NODE_ENV || "development",
   APP_URL: getEnvVariable("NEXT_PUBLIC_APP_URL", "http://localhost:3000"),
   
-  // API - Using Riwi Talent Backend
-  // Using local backend
-  API_URL: getEnvVariable("NEXT_PUBLIC_API_URL", "http://localhost:5162/api"),
+  // API - Configuración inteligente según entorno
+  API_URL: (() => {
+    // Si hay variable de entorno específica, usarla
+    if (process.env.NEXT_PUBLIC_API_URL) {
+      return process.env.NEXT_PUBLIC_API_URL;
+    }
+    
+    // En desarrollo local, usar localhost
+    if (isDevelopment) {
+      return "http://localhost:5162/api";
+    }
+    
+    // En producción, usar ngrok por defecto (se puede cambiar con env var)
+    return "https://tu-ngrok-url.ngrok.io/api";
+  })(),
+  
   BACKEND_API_URL: getEnvVariable("NEXT_PUBLIC_BACKEND_API_URL", "http://localhost:5162/api"),
   API_TIMEOUT: parseInt(getEnvVariable("NEXT_PUBLIC_API_TIMEOUT", "30000")),
   
@@ -45,6 +66,10 @@ export const env = {
   // Third Party Services
   GOOGLE_ANALYTICS_ID: process.env.NEXT_PUBLIC_GOOGLE_ANALYTICS_ID || "",
   SENTRY_DSN: process.env.NEXT_PUBLIC_SENTRY_DSN || "",
+  
+  // Flags de entorno
+  IS_PRODUCTION: isProduction,
+  IS_DEVELOPMENT: isDevelopment,
 } as const;
 
 export type EnvConfig = typeof env;

@@ -27,6 +27,8 @@ class HttpClient {
     this.baseURL = baseURL || env.API_URL;
     this.defaultHeaders = {
       "Content-Type": "application/json",
+      // Header para saltear la advertencia de ngrok
+      "ngrok-skip-browser-warning": "true"
     };
     this.interceptors = {
       request: [],
