@@ -91,11 +91,18 @@ function TalentPageContent() {
   }, [filters, pathname, router]);
 
   const handleFiltersChange = (newFilters: Partial<TalentFiltersType>) => {
-    setFilters(prev => ({
-      ...prev,
-      ...newFilters,
-      page: 1, // Reset to first page when filters change
-    }));
+    setFilters(prev => {
+      // Only reset page if it's not a page change itself
+      const shouldResetPage = !('page' in newFilters) && Object.keys(newFilters).some(
+        key => key !== 'page' && prev[key as keyof TalentFiltersType] !== newFilters[key as keyof TalentFiltersType]
+      );
+      
+      return {
+        ...prev,
+        ...newFilters,
+        ...(shouldResetPage ? { page: 1 } : {})
+      };
+    });
   };
 
   const handleSearch = () => {
@@ -238,8 +245,7 @@ function TalentPageContent() {
               {/* Talent List */}
               <TalentList 
                 filters={filters}
-                onFiltersChange={handleFiltersChange}
-                viewMode={viewMode}
+                onFilterChange={handleFiltersChange}
               />
             </div>
 

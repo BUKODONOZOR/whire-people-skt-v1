@@ -8,6 +8,8 @@
 import { useState, useEffect } from "react";
 import { cn } from "@/lib/utils";
 import type { Talent } from "@/features/talent/types/talent.types";
+import { useTalent } from "@/features/talent/hooks/use-talents";
+import { LoadingSpinner } from "@/shared/components/loading-spinner";
 import { 
   generateProfessionalAvatar, 
   getInitials, 
@@ -141,29 +143,40 @@ function generateEducation(seed: string) {
 }
 
 /**
- * Format phone number - Remove leading 3 and add random digit at end
+ * Format phone number - Consistent formatting using seed
  */
 function formatPhoneNumber(phone?: string, seed?: string): string {
   if (!phone) {
-    const areaCode = Math.floor(Math.random() * 900) + 100;
-    const prefix = Math.floor(Math.random() * 900) + 100;
-    const lineNumber = Math.floor(Math.random() * 9000) + 1000;
-    return `+1 (${areaCode}) ${prefix}-${lineNumber}`;
+    // Generate consistent phone based on seed
+    if (seed) {
+      let hash = 0;
+      for (let i = 0; i < seed.length; i++) {
+        hash = ((hash << 5) - hash) + seed.charCodeAt(i);
+        hash = hash & hash;
+      }
+      const absHash = Math.abs(hash);
+      const areaCode = 200 + (absHash % 800);
+      const prefix = 200 + ((absHash >> 10) % 800);
+      const lineNumber = 1000 + ((absHash >> 20) % 9000);
+      return `+1 (${areaCode}) ${prefix}-${lineNumber}`;
+    }
+    return `+1 (555) 555-5555`;
   }
   
   // Remove leading 3 if present
   let cleanPhone = phone.startsWith('3') ? phone.substring(1) : phone;
   
-  // Add consistent random digit at the end based on seed
+  // Ensure consistent formatting - pad with seed-based digits if needed
   if (cleanPhone.length < 10 && seed) {
     let hash = 0;
     for (let i = 0; i < seed.length; i++) {
       hash = ((hash << 5) - hash) + seed.charCodeAt(i);
       hash = hash & hash;
     }
-    cleanPhone += Math.abs(hash % 10).toString();
-  } else if (cleanPhone.length < 10) {
-    cleanPhone += Math.floor(Math.random() * 10).toString();
+    while (cleanPhone.length < 10) {
+      cleanPhone += Math.abs(hash % 10).toString();
+      hash = hash >> 4;
+    }
   }
   
   const cleaned = cleanPhone.replace(/\D/g, '');
@@ -173,19 +186,6 @@ function formatPhoneNumber(phone?: string, seed?: string): string {
   }
   
   return `+1 ${cleanPhone}`;
-}
-
-/**
- * Generate consistent age based on email/id
- */
-function generateAge(seed: string): number {
-  let hash = 0;
-  for (let i = 0; i < seed.length; i++) {
-    const char = seed.charCodeAt(i);
-    hash = ((hash << 5) - hash) + char;
-    hash = hash & hash;
-  }
-  return 22 + (Math.abs(hash) % 24);
 }
 
 /**
@@ -223,6 +223,40 @@ export function TalentDetailModal({
 }: TalentDetailModalProps) {
   const [activeTab, setActiveTab] = useState<'overview' | 'experience' | 'skills' | 'certifications'>('overview');
   
+  // Fetch complete talent data when modal opens
+  const { data: detailedTalent, isLoading: isLoadingDetails, error } = useTalent(
+    talent?.id || '',
+    { enabled: isOpen && !!talent?.id }
+  );
+  
+  // Use detailed data if available, fallback to original talent data
+  const currentTalent = detailedTalent || talent;
+  
+  // Debug: Log talent data to verify email is present
+  console.log('[TalentDetailModal] Talent data:', {
+    originalTalent: {
+      firstName: talent?.firstName,
+      email: talent?.email,
+      phone: talent?.phone,
+      statusId: talent?.statusId,
+      status: talent?.status
+    },
+    detailedTalent: {
+      firstName: detailedTalent?.firstName,
+      email: detailedTalent?.email,
+      phone: detailedTalent?.phone,
+      statusId: detailedTalent?.statusId,
+      status: detailedTalent?.status
+    },
+    currentTalent: {
+      firstName: currentTalent?.firstName,
+      email: currentTalent?.email,
+      phone: currentTalent?.phone,
+      statusId: currentTalent?.statusId,
+      status: currentTalent?.status
+    }
+  });
+  
   // Handle ESC key to close modal
   useEffect(() => {
     const handleEsc = (e: KeyboardEvent) => {
@@ -244,48 +278,95 @@ export function TalentDetailModal({
   
   if (!talent || !isOpen) return null;
   
+  // Show loading state while fetching details
+  if (isLoadingDetails) {
+    return (
+      <div className="fixed inset-0 z-50 overflow-y-auto">
+        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm transition-opacity" onClick={onClose} />
+        <div className="relative min-h-screen flex items-center justify-center p-4">
+          <div className="relative bg-white rounded-2xl shadow-2xl w-full max-w-md p-8">
+            <div className="text-center">
+              <LoadingSpinner />
+              <p className="mt-4 text-gray-600">Loading talent details...</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
+  
   // Get full name and other data
-  const fullName = getFullName(talent);
-  const initials = getTalentInitials(talent);
+  const fullName = getFullName(currentTalent);
+  const initials = getTalentInitials(currentTalent);
   
   // Use actual data from backend
-  const location = talent.site || talent.location || 'Remote';
-  const jobTitle = talent.stack || talent.title || talent.profile || 'Professional';
-  const cohort = talent.cohort || '';
+  const location = currentTalent.site || currentTalent.location || 'Remote';
+  const jobTitle = currentTalent.stack || currentTalent.title || currentTalent.profile || 'Professional';
+  const cohort = currentTalent.cohort || '';
   
-  // Generate consistent age and education
-  const age = generateAge(talent.id || talent.email || fullName);
-  const education = generateEducation(talent.id || talent.email || fullName);
+  // Generate consistent education
+  const education = generateEducation(currentTalent.id || currentTalent.email || fullName);
   
   // Format phone from actual data with consistent random digit
-  const phoneNumber = formatPhoneNumber(talent.phone, talent.id || talent.email);
+  const phoneNumber = formatPhoneNumber(currentTalent.phone, currentTalent.id || currentTalent.email);
   
   // Enrich talent with avatar
-  const enrichedTalent = enrichTalentWithAvatar(talent, index, true);
+  const enrichedTalent = enrichTalentWithAvatar(currentTalent, index, true);
   
-  // Status configurations
-  const statusConfig = {
-    1: { label: talent.status || "Available", color: "bg-green-500/10 text-green-600", icon: CheckCircle },
-    2: { label: "In Process", color: "bg-[#FC7E00]/10 text-[#FC7E00]", icon: Clock },
-    3: { label: "Hired", color: "bg-[#0D6661]/10 text-[#0D6661]", icon: Briefcase },
-    4: { label: "Not Available", color: "bg-gray-100 text-gray-600", icon: X },
-    5: { label: "Rejected", color: "bg-red-50 text-red-600", icon: X },
+  // Status configurations with translation
+  const getStatusLabel = (statusId: number | undefined, statusText: string | undefined): string => {
+    // Map status IDs to labels
+    const statusMap: Record<number, string> = {
+      1: "Disponible",
+      2: "En Proceso",
+      3: "Contratado",
+      4: "No Disponible",
+      5: "Rechazado"
+    };
+    
+    // Try to get from statusId first, then from statusText
+    if (statusId && statusMap[statusId]) {
+      return statusMap[statusId];
+    }
+    
+    // Fallback to translating status text if provided
+    const textTranslations: Record<string, string> = {
+      "Available": "Disponible",
+      "In Process": "En Proceso",
+      "Hired": "Contratado",
+      "Not Available": "No Disponible",
+      "Rejected": "Rechazado"
+    };
+    
+    if (statusText && textTranslations[statusText]) {
+      return textTranslations[statusText];
+    }
+    
+    return statusText || "Disponible";
   };
   
-  const status = statusConfig[talent.statusId || talent.status] || statusConfig[1];
+  const statusConfig = {
+    1: { label: getStatusLabel(1, currentTalent.status), color: "bg-green-500/10 text-green-600", icon: CheckCircle },
+    2: { label: getStatusLabel(2, "In Process"), color: "bg-[#FC7E00]/10 text-[#FC7E00]", icon: Clock },
+    3: { label: getStatusLabel(3, "Hired"), color: "bg-[#0D6661]/10 text-[#0D6661]", icon: Briefcase },
+    4: { label: getStatusLabel(4, "Not Available"), color: "bg-gray-100 text-gray-600", icon: X },
+    5: { label: getStatusLabel(5, "Rejected"), color: "bg-red-50 text-red-600", icon: X },
+  };
+  
+  const status = statusConfig[currentTalent.statusId || currentTalent.status] || statusConfig[1];
   const StatusIcon = status.icon;
   
   // Demo data enrichment
   const demoData = {
-    bio: `Highly skilled ${jobTitle} with ${talent.yearsOfExperience || '5+'} years of experience. ${age} years old professional based in ${location}, passionate about delivering innovative solutions and driving organizational success through expertise in cutting-edge technologies and methodologies. Strong educational background with ${education.degree.level} in ${education.field} from ${education.university}. Proven track record of success in challenging enterprise projects.`,
+    bio: `Highly skilled ${jobTitle} with ${currentTalent.yearsOfExperience || '5+'} years of experience. Professional based in ${location}, passionate about delivering innovative solutions and driving organizational success through expertise in cutting-edge technologies and methodologies. Strong educational background with ${education.degree.level} in ${education.field} from ${education.university}. Proven track record of success in challenging enterprise projects.`,
     
-    languages: talent.languages || [
+    languages: currentTalent.languages || [
       { name: "English", level: "Native" },
       { name: "Spanish", level: "Professional" }
     ],
     
     availability: {
-      type: talent.availability || "Full-time",
+      type: currentTalent.availability || "Full-time",
       startDate: "Immediate",
       preferredContract: "Long-term",
       remoteWork: location === "Remote" ? "Fully Remote" : "Hybrid"
@@ -387,7 +468,7 @@ export function TalentDetailModal({
                   <div className="hidden w-32 h-32 rounded-xl border-4 border-white bg-gradient-to-br from-[#0D6661] to-[#164643] items-center justify-center shadow-xl">
                     <span className="text-3xl font-bold text-white">{initials}</span>
                   </div>
-                  {talent.statusId === 1 && (
+                  {currentTalent.statusId === 1 && (
                     <div className="absolute bottom-2 right-2 w-6 h-6 bg-green-500 rounded-full border-3 border-white"></div>
                   )}
                 </div>
@@ -396,16 +477,16 @@ export function TalentDetailModal({
                 <div className="flex-1 text-white">
                   <h2 className="text-3xl font-bold mb-1">{fullName}</h2>
                   <p className="text-lg opacity-90">{jobTitle}</p>
-                  <div className="flex items-center gap-4 mt-2">
-                    <span className="flex items-center gap-1.5 text-sm">
+                  <div className="flex items-center gap-6 mt-3 flex-wrap">
+                    <span className="flex items-center gap-1.5 text-sm bg-white/10 backdrop-blur-sm px-3 py-1.5 rounded-lg">
                       <MapPin className="w-4 h-4" />
                       {location}
                     </span>
-                    <span className="flex items-center gap-1.5 text-sm">
-                      <User className="w-4 h-4" />
-                      {age} years old
+                    <span className="flex items-center gap-1.5 text-sm bg-white/10 backdrop-blur-sm px-3 py-1.5 rounded-lg">
+                      <Mail className="w-4 h-4" />
+                      {currentTalent.email || 'email@example.com'}
                     </span>
-                    <span className="flex items-center gap-1.5 text-sm">
+                    <span className="flex items-center gap-1.5 text-sm bg-white/10 backdrop-blur-sm px-3 py-1.5 rounded-lg">
                       <Phone className="w-4 h-4" />
                       {phoneNumber}
                     </span>
@@ -464,24 +545,24 @@ export function TalentDetailModal({
                       <StatusIcon className="w-4 h-4 mr-1.5" />
                       {status.label}
                     </span>
-                    {talent.score && (
+                    {currentTalent.score && (
                       <div className="flex items-center gap-2">
                         <Star className="w-5 h-5 text-[#FC7E00] fill-[#FC7E00]" />
-                        <span className="text-lg font-bold">{talent.score}/100</span>
+                        <span className="text-lg font-bold">{currentTalent.score}/100</span>
                         <span className="text-sm text-gray-500">Match Score</span>
                       </div>
                     )}
                    
                   </div>
                   <div className="flex items-center gap-3">
-                    <a href="#" className="p-2 hover:bg-gray-100 rounded-lg transition-colors">
+                    <a 
+                      href={currentTalent.linkedin || `https://www.linkedin.com/search/results/people/?keywords=${encodeURIComponent(fullName)}`}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
+                      title="Search on LinkedIn"
+                    >
                       <Linkedin className="w-5 h-5 text-[#0077B5]" />
-                    </a>
-                    <a href="#" className="p-2 hover:bg-gray-100 rounded-lg transition-colors">
-                      <Github className="w-5 h-5 text-gray-700" />
-                    </a>
-                    <a href="#" className="p-2 hover:bg-gray-100 rounded-lg transition-colors">
-                      <Globe className="w-5 h-5 text-gray-700" />
                     </a>
                   </div>
                 </div>
@@ -500,7 +581,7 @@ export function TalentDetailModal({
                       <span className="text-xs text-gray-500">Experience</span>
                     </div>
                     <p className="text-lg font-semibold text-gray-900">
-                      {talent.yearsOfExperience || '5+'} years
+                      {currentTalent.yearsOfExperience || '5+'} years
                     </p>
                   </div>
                   
@@ -510,7 +591,7 @@ export function TalentDetailModal({
                       <span className="text-xs text-gray-500">Rate</span>
                     </div>
                     <p className="text-lg font-semibold text-gray-900">
-                      {talent.hourlyRate || '$75-100/hr'}
+                      {currentTalent.hourlyRate || '$75-100/hr'}
                     </p>
                   </div>
                   
@@ -530,7 +611,7 @@ export function TalentDetailModal({
                       <span className="text-xs text-gray-500">Active Processes</span>
                     </div>
                     <p className="text-lg font-semibold text-gray-900">
-                      {talent.activeProcesses || 0}
+                      {currentTalent.activeProcesses || 0}
                     </p>
                   </div>
                 </div>
@@ -546,6 +627,31 @@ export function TalentDetailModal({
                         <span className="text-xs text-gray-500">({lang.level})</span>
                       </div>
                     ))}
+                  </div>
+                </div>
+                
+                {/* Contact Information */}
+                <div>
+                  <h3 className="text-lg font-semibold mb-3 text-gray-900">Contact Information</h3>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div className="flex items-center gap-3 p-4 bg-gray-50 rounded-lg border border-gray-200">
+                      <div className="p-2 bg-[#0D6661]/10 rounded-lg">
+                        <Mail className="w-5 h-5 text-[#0D6661]" />
+                      </div>
+                      <div className="flex-1">
+                        <p className="text-sm text-gray-500 mb-1">Email Address</p>
+                        <p className="font-medium text-gray-900">{currentTalent.email || 'Not provided'}</p>
+                      </div>
+                    </div>
+                    <div className="flex items-center gap-3 p-4 bg-gray-50 rounded-lg border border-gray-200">
+                      <div className="p-2 bg-[#0D6661]/10 rounded-lg">
+                        <Phone className="w-5 h-5 text-[#0D6661]" />
+                      </div>
+                      <div className="flex-1">
+                        <p className="text-sm text-gray-500 mb-1">Phone Number</p>
+                        <p className="font-medium text-gray-900">{phoneNumber}</p>
+                      </div>
+                    </div>
                   </div>
                 </div>
                 
@@ -567,7 +673,7 @@ export function TalentDetailModal({
             {activeTab === 'experience' && (
               <div className="space-y-6">
                 <h3 className="text-lg font-semibold text-gray-900">Professional Experience</h3>
-                {talent.experience?.map((exp, idx) => (
+                {currentTalent.experience?.map((exp, idx) => (
                   <div key={idx} className="p-5 bg-gray-50 rounded-lg border border-gray-200">
                     <div className="flex items-start justify-between mb-2">
                       <div>
@@ -637,7 +743,7 @@ export function TalentDetailModal({
               <div className="space-y-6">
                 <h3 className="text-lg font-semibold text-gray-900">Technical Skills</h3>
                 <div className="space-y-4">
-                  {talent.skills?.map((skill, idx) => {
+                  {currentTalent.skills?.map((skill, idx) => {
                     const skillName = typeof skill === 'string' ? skill : skill.name;
                     const skillLevel = typeof skill === 'object' ? skill.level : (80 + Math.random() * 20);
                     const roleColors = getRoleBadgeColor(typeof skill === 'object' ? skill.category || 'default' : 'default');
@@ -726,7 +832,7 @@ export function TalentDetailModal({
                     Professional Certifications
                   </h3>
                   <div className="space-y-3">
-                    {(talent.certifications || demoData.certifications).map((cert, idx) => (
+                    {(currentTalent.certifications || demoData.certifications).map((cert, idx) => (
                       <div key={idx} className="flex items-start gap-4 p-4 bg-gray-50 rounded-lg border border-gray-200 hover:border-[#0D6661] transition-colors">
                         <Award className="w-8 h-8 text-[#FC7E00] flex-shrink-0" />
                         <div className="flex-1">

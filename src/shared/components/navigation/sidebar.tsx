@@ -52,10 +52,17 @@ export function Sidebar({ className }: SidebarProps) {
 
   const navigationItems: NavigationItem[] = [
     {
-      id: "dashboard",
-      label: "Dashboard", 
-      href: "/",
+      id: "home",
+      label: "Home", 
+      href: "/home",
       icon: Home,
+      description: "Welcome to Wired People"
+    },
+    {
+      id: "dashboard",
+      label: "Overview", 
+      href: "/",
+      icon: BarChart3,
       description: "Overview and analytics"
     },
     {
@@ -74,7 +81,7 @@ export function Sidebar({ className }: SidebarProps) {
     },
     {
       id: "metrics",
-      label: "Metrics",
+      label: "Metrics Dashboard",
       href: "/metrics",
       icon: BarChart3,
       description: "Performance analytics"
