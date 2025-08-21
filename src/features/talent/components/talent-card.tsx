@@ -170,10 +170,10 @@ export function TalentCard({
   // Use cohort info
   const cohort = talent.cohort || '';
   
-  // Status configurations with Wired People colors
+  // Status configurations with English labels
   const statusConfig = {
     1: { 
-      label: talent.status || "Available", 
+      label: "Available", 
       color: "bg-green-500/10 text-green-600 border-green-500/20",
       dotColor: "text-green-500"
     },
@@ -199,7 +199,17 @@ export function TalentCard({
     },
   };
   
-  const status = statusConfig[talent.statusId || talent.status] || statusConfig[1];
+  // Get status configuration based on statusId or fallback to status 1 (Available)
+  const currentStatus = statusConfig[talent.statusId as keyof typeof statusConfig] || statusConfig[1];
+  
+  // Debug: Log status info
+  console.log('[TalentCard] Status info for', fullName, ':', {
+    statusId: talent.statusId,
+    statusText: talent.status,
+    resolvedStatus: currentStatus.label
+  });
+  
+  const status = currentStatus;
   
   if (variant === "compact") {
     return (

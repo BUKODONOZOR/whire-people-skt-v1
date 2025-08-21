@@ -232,31 +232,6 @@ export function TalentDetailModal({
   // Use detailed data if available, fallback to original talent data
   const currentTalent = detailedTalent || talent;
   
-  // Debug: Log talent data to verify email is present
-  console.log('[TalentDetailModal] Talent data:', {
-    originalTalent: {
-      firstName: talent?.firstName,
-      email: talent?.email,
-      phone: talent?.phone,
-      statusId: talent?.statusId,
-      status: talent?.status
-    },
-    detailedTalent: {
-      firstName: detailedTalent?.firstName,
-      email: detailedTalent?.email,
-      phone: detailedTalent?.phone,
-      statusId: detailedTalent?.statusId,
-      status: detailedTalent?.status
-    },
-    currentTalent: {
-      firstName: currentTalent?.firstName,
-      email: currentTalent?.email,
-      phone: currentTalent?.phone,
-      statusId: currentTalent?.statusId,
-      status: currentTalent?.status
-    }
-  });
-  
   // Handle ESC key to close modal
   useEffect(() => {
     const handleEsc = (e: KeyboardEvent) => {
@@ -315,13 +290,13 @@ export function TalentDetailModal({
   
   // Status configurations with translation
   const getStatusLabel = (statusId: number | undefined, statusText: string | undefined): string => {
-    // Map status IDs to labels
+    // Map status IDs to English labels
     const statusMap: Record<number, string> = {
-      1: "Disponible",
-      2: "En Proceso",
-      3: "Contratado",
-      4: "No Disponible",
-      5: "Rechazado"
+      1: "Available",
+      2: "In Process", 
+      3: "Hired",
+      4: "Not Available",
+      5: "Rejected"
     };
     
     // Try to get from statusId first, then from statusText
@@ -329,20 +304,12 @@ export function TalentDetailModal({
       return statusMap[statusId];
     }
     
-    // Fallback to translating status text if provided
-    const textTranslations: Record<string, string> = {
-      "Available": "Disponible",
-      "In Process": "En Proceso",
-      "Hired": "Contratado",
-      "Not Available": "No Disponible",
-      "Rejected": "Rechazado"
-    };
-    
-    if (statusText && textTranslations[statusText]) {
-      return textTranslations[statusText];
+    // If we have statusText, return it as is (should already be in English from backend)
+    if (statusText) {
+      return statusText;
     }
     
-    return statusText || "Disponible";
+    return "Available";
   };
   
   const statusConfig = {
