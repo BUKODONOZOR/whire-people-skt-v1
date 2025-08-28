@@ -4,7 +4,7 @@
  */
 
 // Fixed Company ID for Wired People (using Riwi Talent backend)
-export const WIRED_PEOPLE_COMPANY_ID = "7dd16aaa-793d-4017-8513-936df5e3010b";
+export const WIRED_PEOPLE_COMPANY_ID = "ea72837a-6838-419a-9de6-903587f24918";
 export const WIRED_PEOPLE_COMPANY_NAME = "Wired People Inc.";
 
 // Process configuration
